@@ -5,6 +5,7 @@ export interface DateEvent {
     setDate: Date | null;
     dateDue: Date | null;
     attendees: number[];
+    editable: boolean;
 }
 
 export const sampleEvents: DateEvent[] = [
@@ -14,7 +15,8 @@ export const sampleEvents: DateEvent[] = [
         description: "Discuss project milestones and deliverables.",
         setDate: null,
         dateDue: new Date(2026, 1, 10, 15, 0),
-        attendees: [0, 1]
+        attendees: [0, 1],
+        editable: false
     },
     {
         id: 2,
@@ -22,6 +24,7 @@ export const sampleEvents: DateEvent[] = [
         description: "Team lunch at the local restaurant.",
         setDate: null,
         dateDue: null,
-        attendees: [0]
+        attendees: [0],
+        editable: true
     }
 ];

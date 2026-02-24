@@ -1,9 +1,11 @@
 import DefaultLayout from "@/layouts/default";
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {DateEvent, sampleEvents} from "@/components/events";
 import {Button} from "@heroui/button";
-import {title} from "@/components/primitives";
+import {useAuth} from "@/context/AuthContext";
+import {useRouter} from "next/router";
+import {Input} from "@heroui/input";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -29,6 +31,15 @@ export default function App() {
     const [events, setEvents] = useState<{ [key: number]: DateEvent[] }>({});
     const [unsetEvents, setUnsetEvents] = useState<DateEvent[]>(sampleEvents);
     const [draggedEvent, setDraggedEvent] = useState<DateEvent | null>(null);
+    const [editingEvent, setEditingEvent] = useState<DateEvent | null>(null);
+    const {user} = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (user) return;
+        router.push("/login").then(r => {
+        });
+    }, [user]);
 
     const handlePrevMonth = () => {
         if (selectedMonth === 0) {
@@ -90,12 +101,15 @@ export default function App() {
         setDraggedEvent(null);
     }
 
-    const createDateCell = (date: number | null, key: string) => {
+    const createDateCell = (date: number | null, key: string, month?: number, year?: number) => {
         if (date === null) return <div key={key} className="w-[180px] h-[120px]"/>;
         return (
-            <div key={key} className="w-[160px] h-[120px] cursor-pointer" onClick={() => handleDateClick(date)}>
+            <div key={key} className={"w-[160px] h-[120px] cursor-pointer"} onClick={() => handleDateClick(date)}>
                 <Card className="w-full h-full flex flex-col hover:bg-gray-600">
-                    <CardHeader>{date}</CardHeader>
+                    <CardHeader className={"flex justify-between"}>
+                        <span>{date}</span>
+                        <span className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == todayNoTime().toString()) ? "Today" : "")}</span>
+                    </CardHeader>
                     <CardBody>
                         <div
                             className="text-sm text-gray-500">{hasEvent(date) ? eventCount(date) + " Event" + (eventCount(date) == 1 ? "" : "s") : "No Events"}</div>
@@ -113,7 +127,7 @@ export default function App() {
             cells.push(createDateCell(null, `empty-start-${i}`));
         }
         for (let day = 1; day <= daysInMonth; day++) {
-            cells.push(createDateCell(day, `day-${day}`));
+            cells.push(createDateCell(day, `day-${day}`, month, year));
         }
         while (cells.length % 7 !== 0) {
             cells.push(createDateCell(null, `empty-end-${cells.length}`));
@@ -152,6 +166,7 @@ export default function App() {
         return (
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-64">
                 {editScreenSidePanel()}
+                {editingEvent && editEventScreen()}
                 <Card className="p-2" onDrop={handleCurrEditDrop} onDragOver={e => e.preventDefault()}>
                     <CardHeader className="flex items-center justify-between">
                         {new Date(selectedYear, selectedMonth).toLocaleString('default', {month: 'long'})} {editDate}{getOrdinalSuffix(editDate!)}
@@ -179,10 +194,45 @@ export default function App() {
                         <Button>Create Event</Button>
                     </CardHeader>
                     <CardBody>
-                        {getUnsetEvents() && getUnsetEvents().length == 0 && <p className="text-gray-500">No events!</p>}
+                        {getUnsetEvents() && getUnsetEvents().length == 0 &&
+                            <p className="text-gray-500">No events!</p>}
                         {getUnsetEvents() && getUnsetEvents().map(event => createEventElement(event))}
                     </CardBody>
                     <CardFooter>
+                    </CardFooter>
+                </Card>
+            </div>
+        );
+    }
+
+    const editEventScreen = () => {
+        return (
+            <div className="fixed bottom-1/2 left-1/8 z-50 w-1/4 p-4">
+                <Card className="p-4">
+                    <CardHeader>
+                        <Input
+                            defaultValue={editingEvent?.title}
+                            labelPlacement={"outside"}
+                            placeholder={"Set title"}
+                            label={"Title"}
+                            onChange={e => setEditingEvent({...editingEvent!, title: e.target.value})}
+                        />
+                    </CardHeader>
+                    <CardBody>
+                        <Input
+                            labelPlacement={"outside"}
+                            placeholder={"Set due date"}
+                            label={"Due date"}
+                            onChange={e => setEditingEvent({...editingEvent!, dateDue: new Date(e.target.value)})}
+                            type={"datetime-local"}
+                        />
+                        <textarea defaultValue={editingEvent?.description}
+                                  onChange={e => setEditingEvent({...editingEvent!, description: e.target.value})}
+                                  className="w-full h-32 p-2 border-1 border-gray-500 rounded-s mt-4"/>
+                    </CardBody>
+                    <CardFooter className="flex gap-2">
+                        <Button onPress={e => saveCurrentEdit()}>Save</Button>
+                        <Button onPress={e => setEditingEvent(null)}>Close</Button>
                     </CardFooter>
                 </Card>
             </div>
@@ -197,22 +247,54 @@ export default function App() {
                 onDragStart={() => handleDragStart(event)}
                 onDragEnd={handleDragEnd}
             >
-                <CardHeader className="text-gray-300">{event.title}</CardHeader>
+                <CardHeader className="text-gray-300 flex items-center justify-between">
+                    {event.title}
+                    {event.editable ?
+                        <Button onPress={() => setEditingEvent(event)}>Edit</Button>
+                        : ""}
+                </CardHeader>
                 <CardBody>
                     {event.description}
                 </CardBody>
                 <CardFooter>
-                    {}
-                    {event.dateDue && <span className="text-sm text-gray-500">Due: {event.dateDue?.toLocaleDateString()} {event.dateDue?.toLocaleTimeString()}</span>}
+                    {event.dateDue && <span className="text-sm text-gray-500">
+                        Due: {event.dateDue?.toLocaleDateString()} {event.dateDue?.toLocaleTimeString()}
+                    </span>}
                 </CardFooter>
             </Card>
         );
     };
 
+    const saveCurrentEdit = () => {
+        if (!editingEvent) return;
+        replaceEvent(editingEvent.id, editingEvent);
+        setEditingEvent(null);
+    }
+
+    const replaceEvent = (id: number, newEvent: DateEvent) => {
+        const newEvents = {...events};
+        for (const date in newEvents) {
+            newEvents[date] = newEvents[date].map(e => e.id === id ? newEvent : e);
+        }
+        setEvents(newEvents);
+        if (unsetEvents.some(e => e.id === id)) {
+            setUnsetEvents(unsetEvents.map(e => e.id === id ? newEvent : e));
+        }
+    }
+
     const getUnsetEvents = () => {
         return unsetEvents.filter(e => {
             return e.dateDue == null || (currDate().getTime() < e.dateDue?.getTime());
         });
+    }
+
+    const createDate = (day: number, month: number, year: number) => {
+        return new Date(year, month, day);
+    }
+
+    const todayNoTime = () => {
+        const today = new Date();
+        return new Date(today.getFullYear(), today.getMonth(), today.getDate());
     }
 
     const currDate = () => {

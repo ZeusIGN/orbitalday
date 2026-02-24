@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
 import {Input} from "@heroui/input";
 import {Button} from "@heroui/button";
@@ -15,8 +15,13 @@ export default function LoginPage() {
     const [isVisible, setIsVisible] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const {login} = useAuth();
+    const {login, user} = useAuth();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!user) return;
+        router.push("/app").then(r => {});
+    }, [user]);
 
     const toggleVisibility = () => setIsVisible(!isVisible);
 
