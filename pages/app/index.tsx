@@ -1,11 +1,12 @@
 import DefaultLayout from "@/layouts/default";
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
 import {useEffect, useState} from "react";
-import {DateEvent, sampleEvents} from "@/components/events";
+import {DateEvent} from "@/components/events";
 import {Button} from "@heroui/button";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 import {Input} from "@heroui/input";
+import {privateAxios} from "@/api";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -29,10 +30,10 @@ export default function App() {
     const [editOpen, setEditOpen] = useState(false);
     const [editDate, setEditDate] = useState<number | null>(null);
     const [events, setEvents] = useState<{ [key: number]: DateEvent[] }>({});
-    const [unsetEvents, setUnsetEvents] = useState<DateEvent[]>(sampleEvents);
+    const [unsetEvents, setUnsetEvents] = useState<DateEvent[]>([]);
     const [draggedEvent, setDraggedEvent] = useState<DateEvent | null>(null);
     const [editingEvent, setEditingEvent] = useState<DateEvent | null>(null);
-    const {user} = useAuth();
+    const {user, currentWorkspace} = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -40,6 +41,11 @@ export default function App() {
         router.push("/login").then(r => {
         });
     }, [user]);
+
+    useEffect(() => {
+        fetchEvents().then(r => {
+        })
+    }, [currentWorkspace])
 
     const handlePrevMonth = () => {
         if (selectedMonth === 0) {
@@ -80,6 +86,7 @@ export default function App() {
     const handleCurrEditDrop = () => {
         if (!draggedEvent || editDate == null) return;
         if (hasEvent(editDate) && events[editDate].some(e => e.id === draggedEvent.id)) return;
+        draggedEvent.setDate = createDate(editDate, selectedMonth, selectedYear);
         const newEvents = {...events};
         if (!newEvents[editDate]) newEvents[editDate] = [];
         newEvents[editDate].push(draggedEvent);
@@ -92,6 +99,7 @@ export default function App() {
     const handleSidebarDrop = () => {
         if (!draggedEvent) return;
         const newEvents = {...events};
+        draggedEvent.setDate = null;
         if (editDate != null && unsetEvents.some(e => e.id === draggedEvent.id)) return;
         if (editDate != null && newEvents[editDate]) {
             newEvents[editDate] = newEvents[editDate].filter(e => e.id !== draggedEvent.id);
@@ -108,7 +116,8 @@ export default function App() {
                 <Card className="w-full h-full flex flex-col hover:bg-gray-600">
                     <CardHeader className={"flex justify-between"}>
                         <span>{date}</span>
-                        <span className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == todayNoTime().toString()) ? "Today" : "")}</span>
+                        <span
+                            className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == todayNoTime().toString()) ? "Today" : "")}</span>
                     </CardHeader>
                     <CardBody>
                         <div
@@ -191,12 +200,12 @@ export default function App() {
                 <Card onDrop={handleSidebarDrop} onDragOver={e => e.preventDefault()} className="h-full">
                     <CardHeader className="flex items-center justify-between">
                         <span className="text-lg font-medium text-gray-600">Available Events</span>
-                        <Button>Create Event</Button>
+                        <Button onPress={e => createUnsetEvent()}>Create Event</Button>
                     </CardHeader>
                     <CardBody>
                         {getUnsetEvents() && getUnsetEvents().length == 0 &&
                             <p className="text-gray-500">No events!</p>}
-                        {getUnsetEvents() && getUnsetEvents().map(event => createEventElement(event))}
+                        {Array.isArray(getUnsetEvents()) && getUnsetEvents().map(event => createEventElement(event))}
                     </CardBody>
                     <CardFooter>
                     </CardFooter>
@@ -265,6 +274,46 @@ export default function App() {
         );
     };
 
+    const createUnsetEvent = async () => {
+        await privateAxios.get("/workspace/" + currentWorkspace + "/createEvent").then(res => {
+            fetchEvents()
+        }).catch(e => {
+        });
+    }
+
+    const fetchEvents = async () => {
+        await privateAxios.get("/workspace/" + currentWorkspace + "/events")
+            .then(res => {
+                const eventsData: DateEvent[] = res.data.events;
+                const newEvents: { [key: number]: DateEvent[] } = {};
+                const newUnset: DateEvent[] = [];
+                Object.values(eventsData).forEach(event => {
+                    const dateDue = event.dateDue ? new Date(event.dateDue) : null;
+                    const setDate = event.setDate ? new Date(event.setDate) : null;
+                    const dateKey = setDate ? setDate.getDate() : null;
+                    const eventObj: DateEvent = {
+                        id: event.id,
+                        title: event.title,
+                        description: event.description,
+                        dateDue: dateDue,
+                        setDate: setDate,
+                        attendees: event.attendees,
+                        editable: event.editable
+                    };
+                    if (dateKey) {
+                        if (!newEvents[dateKey]) newEvents[dateKey] = [];
+                        newEvents[dateKey].push(eventObj);
+                    } else {
+                        newUnset.push(eventObj);
+                    }
+                });
+                setEvents(newEvents);
+                setUnsetEvents(newUnset);
+            })
+            .catch(e => {
+            });
+    }
+
     const saveCurrentEdit = () => {
         if (!editingEvent) return;
         replaceEvent(editingEvent.id, editingEvent);
@@ -283,6 +332,8 @@ export default function App() {
     }
 
     const getUnsetEvents = () => {
+        if (!unsetEvents) return [] as DateEvent[];
+        if (!Array.isArray(unsetEvents)) return unsetEvents as DateEvent[];
         return unsetEvents.filter(e => {
             return e.dateDue == null || (currDate().getTime() < e.dateDue?.getTime());
         });

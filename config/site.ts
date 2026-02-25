@@ -16,8 +16,8 @@ export const siteConfig = {
     ],
     navItemsLoggedIn: [
         {
-            label: "Calendar",
-            href: "/app",
+            label: "Workspaces",
+            href: "/workspaces",
         },
         {
             label: "Profile",
