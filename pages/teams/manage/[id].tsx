@@ -6,7 +6,7 @@ import {useEffect, useState} from "react";
 import {Input} from "@heroui/input";
 import {useRouter} from "next/router";
 import {title} from "@/components/primitives";
-import {Alert} from "@heroui/alert";
+import {addToast} from "@heroui/toast";
 
 export default function TeamManagePage() {
     const router = useRouter();
@@ -16,14 +16,6 @@ export default function TeamManagePage() {
     const [teamName, setTeamName] = useState("");
     const [inviteUsername, setInviteUsername] = useState("");
     const [teamMembers, setTeamMembers] = useState<string[]>([]);
-    const [alertMsg, setAlertMsg] = useState("");
-
-    const updateAlert = (msg: string) => {
-        setAlertMsg(msg);
-        setTimeout(() => {
-            setAlertMsg("");
-        }, 3000);
-    }
 
     useEffect(() => {
         privateAxios.get(`/team/${id}`).then(response => {
@@ -39,9 +31,13 @@ export default function TeamManagePage() {
         if (!inviteUsername) return;
         privateAxios.post(`/team/${id}/invite`, {username: inviteUsername}).then(response => {
             setInviteUsername("");
-            updateAlert(response.data)
+            addToast({
+                title: response.data
+            })
         }).catch(e => {
-            updateAlert(e.response.data);
+            addToast({
+                title: e.response.data
+            })
         });
     }
 
@@ -71,10 +67,6 @@ export default function TeamManagePage() {
 
     return (
         <DefaultLayout>
-            {alertMsg &&
-                <div className="top-0.5 items-center justify-center w-full">
-                    <Alert title={alertMsg}/>
-                </div>}
             <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
                 <div className="inline-block max-w-xl text-center justify-center">
                     <span className={title({color: "violet"})}>{teamName}&nbsp;</span><br/>

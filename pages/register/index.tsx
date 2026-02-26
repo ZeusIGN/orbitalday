@@ -24,11 +24,7 @@ export default function RegisterPage() {
         setLoading(true);
         privateAxios.post("/user/register", {username, password, displayName, email: ""}).then(response => {
             setLoading(false);
-            if (response.status === 200) {
-                window.location.href = "/login";
-            } else {
-                setError((response.data && response.data.body && response.data.body.errorMessage) || "Registration failed");
-            }
+            window.location.href = "/login";
         }).catch(err => {
             if (err.response && err.response.data) {
                 const message = err.response.data || "Registration failed";

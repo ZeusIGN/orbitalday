@@ -3,18 +3,37 @@ import {useEffect, useState} from "react";
 import {privateAxios} from "@/api";
 import {Workspace} from "@/components/workspace";
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
+import {Dropdown, DropdownItem, DropdownMenu, DropdownTrigger} from "@heroui/dropdown";
 import {Input} from "@heroui/input";
 import {Button} from "@heroui/button";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 
+interface Team {
+    id: number;
+    name: string;
+}
+
 export default function WorkspacesPage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [newWorkspaceName, setNewWorkspaceName] = useState("");
-    const {currentWorkspace, setCurrentWorkspace} = useAuth();
+    const [underTeam, setUnderTeam] = useState<number | null>(null);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const {setCurrentWorkspace} = useAuth();
     const router = useRouter();
 
     useEffect(() => {
+        privateAxios.get("/user/teams")
+            .then(response => {
+                const data = response.data.teams;
+                const loadedTeams: Team[] = [];
+                if (Array.isArray(data) && data.length === 0) return;
+                for (const key in data) {
+                    loadedTeams.push({id: parseInt(key), name: data[key]});
+                }
+                setTeams(loadedTeams);
+            }).catch(e => {
+        });
         privateAxios.get("/user/workspaces")
             .then(response => {
                 const data = response.data.workspaces;
@@ -31,7 +50,7 @@ export default function WorkspacesPage() {
     const createWorkspace = async (name: string) => {
         privateAxios.post("/workspace/create", {
             name: name,
-            teamID: null
+            teamID: underTeam
         }).then(response => {
             window.location.reload();
         }).catch(e => {
@@ -74,8 +93,25 @@ export default function WorkspacesPage() {
                         />
                     </div>
                 </CardBody>
-                <CardFooter>
+                <CardFooter className={"justify-between"}>
                     <Button onPress={e => createWorkspace(newWorkspaceName)}>Create Workspace</Button>
+                    <Dropdown>
+                        <DropdownTrigger>
+                            <Button>{underTeam !== null ? teams.find(team => team.id === underTeam)?.name || "None" : "Select Team"}</Button>
+                        </DropdownTrigger>
+                        <DropdownMenu>
+                            {[
+                                <DropdownItem key={-1} onPress={() => setUnderTeam(null)}>
+                                    None
+                                </DropdownItem>,
+                                ...teams.map(team => (
+                                    <DropdownItem key={team.id} onPress={() => setUnderTeam(team.id)}>
+                                        {team.name}
+                                    </DropdownItem>
+                                ))
+                            ]}
+                        </DropdownMenu>
+                    </Dropdown>
                 </CardFooter>
             </Card>
         </DefaultLayout>

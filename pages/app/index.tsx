@@ -117,7 +117,7 @@ export default function App() {
                     <CardHeader className={"flex justify-between"}>
                         <span>{date}</span>
                         <span
-                            className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == todayNoTime().toString()) ? "Today" : "")}</span>
+                            className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == today().toString()) ? "Today" : "")}</span>
                     </CardHeader>
                     <CardBody>
                         <div
@@ -317,6 +317,10 @@ export default function App() {
     const saveCurrentEdit = () => {
         if (!editingEvent) return;
         replaceEvent(editingEvent.id, editingEvent);
+        privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {id: editingEvent.id, title: editingEvent.title, description: editingEvent.description, setDate: editingEvent.setDate?.getTime(), dateDue: editingEvent.dateDue?.getTime(), attendees: editingEvent.attendees})
+            .then(res => {})
+            .catch(e => {
+            });
         setEditingEvent(null);
     }
 
@@ -343,7 +347,7 @@ export default function App() {
         return new Date(year, month, day);
     }
 
-    const todayNoTime = () => {
+    const today = () => {
         const today = new Date();
         return new Date(today.getFullYear(), today.getMonth(), today.getDate());
     }
