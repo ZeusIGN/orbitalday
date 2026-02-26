@@ -21,7 +21,7 @@ export const Navbar = () => {
                     </NextLink>
                 </NavbarBrand>
                 <div className="hidden lg:flex gap-4 justify-start ml-2">
-                    {siteConfig.navItemsLoggedOut.filter(item => !user || (user && !item.userHidden)).map((item) => (
+                    {siteConfig.gloabalNavItem.filter(item => !user || (user && !item.userHidden)).map((item) => (
                         <NavbarItem key={item.href}>
                             <NextLink
                                 className={clsx(

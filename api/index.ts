@@ -1,6 +1,7 @@
 import axios, { AxiosRequestHeaders } from 'axios';
 
 const isProduction = process.env.NODE_ENV === 'production';
+// pagaidām tikai localhost --Renars
 const baseURL = isProduction ? 'https://orbital.day/' : 'http://localhost:1987/';
 
 let accessToken: string | null = null;
@@ -22,6 +23,7 @@ export const privateAxios = axios.create({
     withCredentials: true
 });
 
+// pievieno Authorization header visiem outgoing requestiem --Renars
 privateAxios.interceptors.request.use(
     config => {
         if (accessToken) {

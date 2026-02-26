@@ -17,6 +17,8 @@ export type AuthState = {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
+// saglabā autentifikācijas stāvokli starp lapu ielādēm
+// --Renars
 export function AuthProvider(props: {children: ReactNode}) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null);

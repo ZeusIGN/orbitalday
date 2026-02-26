@@ -3,7 +3,7 @@ export type SiteConfig = typeof siteConfig;
 export const siteConfig = {
     name: "Orbital",
     description: "A team first calendar.",
-    navItemsLoggedOut: [
+    gloabalNavItem: [
         {
             label: "Home",
             href: "/",

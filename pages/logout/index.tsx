@@ -8,6 +8,7 @@ export default function LogoutPage() {
     const router = useRouter();
 
     useEffect(() => {
+        // server consistent logouts --Renars
         const doLogout = async () => {
             try {
                 await privateAxios.get("/user/logout");

@@ -9,6 +9,7 @@ import {Button} from "@heroui/button";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 
+// varbūt šo var exportēt uz atsevišķu failu, lai varētu izmantot arī citur --Renars
 interface Team {
     id: number;
     name: string;
@@ -19,6 +20,7 @@ export default function WorkspacesPage() {
     const [newWorkspaceName, setNewWorkspaceName] = useState("");
     const [underTeam, setUnderTeam] = useState<number | null>(null);
     const [teams, setTeams] = useState<Team[]>([]);
+    // TODO pārmainīt šo uz link, nevis memory --Renars
     const {setCurrentWorkspace} = useAuth();
     const router = useRouter();
 

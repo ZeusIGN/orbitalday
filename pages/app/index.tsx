@@ -10,6 +10,7 @@ import {privateAxios} from "@/api";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// funkcija, kas atgriež dienas skaitļa kārtas piedēkli (1st, 2nd, 3rd, 4th, utt.) --Renars
 function getOrdinalSuffix(day: number) {
     if (day > 3 && day < 21) return 'th';
     switch (day % 10) {
@@ -38,6 +39,7 @@ export default function App() {
 
     useEffect(() => {
         if (user) return;
+        // ja nav users, tad pārvieto uz login page --Renars
         router.push("/login").then(r => {
         });
     }, [user]);
@@ -73,6 +75,8 @@ export default function App() {
     const handleCloseEdit = () => {
         setEditOpen(false);
         setEditDate(null);
+        setEditingEvent(null);
+        setDraggedEvent(null);
     };
 
     const handleDragStart = (event: DateEvent) => {
@@ -93,6 +97,7 @@ export default function App() {
         const newUnset = unsetEvents.filter(e => e.id !== draggedEvent.id);
         setUnsetEvents(newUnset);
         setEvents(newEvents);
+        updateServer(draggedEvent);
         setDraggedEvent(null);
     };
 
@@ -100,12 +105,14 @@ export default function App() {
         if (!draggedEvent) return;
         const newEvents = {...events};
         draggedEvent.setDate = null;
+        // dupe check, lai neizveidotos dublikāti, ja eventu velk no viena datuma uz to pašu datumu --Renars
         if (editDate != null && unsetEvents.some(e => e.id === draggedEvent.id)) return;
         if (editDate != null && newEvents[editDate]) {
             newEvents[editDate] = newEvents[editDate].filter(e => e.id !== draggedEvent.id);
         }
         setEvents(newEvents);
         setUnsetEvents([...unsetEvents, draggedEvent]);
+        updateServer(draggedEvent);
         setDraggedEvent(null);
     }
 
@@ -132,6 +139,11 @@ export default function App() {
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const cells = [];
+        // sākam ar tukšām šūnām līdz pirmajai dienai
+        // pirmais dienas objekts tiek izveidots, lai noteiktu, kurā dienā sākas mēnesis
+        // pēc tam pievienojam šūnas katrai dienai mēnesī
+        // beidzot, ja pēdējā diena nekrīt uz sestdienu, pievienojam tukšas šūnas līdz nedēļas beigām
+        // --Renars
         for (let i = 0; i < firstDay; i++) {
             cells.push(createDateCell(null, `empty-start-${i}`));
         }
@@ -314,13 +326,18 @@ export default function App() {
             });
     }
 
-    const saveCurrentEdit = () => {
-        if (!editingEvent) return;
-        replaceEvent(editingEvent.id, editingEvent);
-        privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {id: editingEvent.id, title: editingEvent.title, description: editingEvent.description, setDate: editingEvent.setDate?.getTime(), dateDue: editingEvent.dateDue?.getTime(), attendees: editingEvent.attendees})
+    const updateServer = (event: DateEvent) => {
+        // informē server par izmaiņām, lai saglabātu datu consistency --Renars
+        privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {id: event.id, title: event.title, description: event.description, setDate: event.setDate?.getTime(), dateDue: event.dateDue?.getTime(), attendees: event.attendees})
             .then(res => {})
             .catch(e => {
             });
+    }
+
+    const saveCurrentEdit = () => {
+        if (!editingEvent) return;
+        replaceEvent(editingEvent.id, editingEvent);
+        updateServer(editingEvent);
         setEditingEvent(null);
     }
 

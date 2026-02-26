@@ -8,6 +8,7 @@ import {privateAxios, setAccessToken} from "@/api";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@/components/icons";
+import {addToast} from "@heroui/toast";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -45,6 +46,7 @@ export default function LoginPage() {
             }
             const body = response.data.body || response.data;
             const accessToken = body.accessToken as string | undefined;
+            // saglabā lokāli --Renars
             if (accessToken) {
                 setAccessToken(accessToken);
                 if (typeof window !== "undefined") window.localStorage.setItem("accessToken", accessToken);
@@ -54,12 +56,8 @@ export default function LoginPage() {
             setLoading(false);
             await router.push("/workspaces");
         } catch (err: any) {
-            if (err.response && err.response.data) {
-                const message = (err.response.data.body && err.response.data.body.errorMessage) || err.response.data.message || "Login failed";
-                handleError(message);
-                return;
-            }
-            handleError("Unable to login. Please try again.");
+            if (err.response.data.errorMessage) handleError(err.response.data.errorMessage)
+            else handleError("Unable to login. Please try again.");
         }
     };
 
