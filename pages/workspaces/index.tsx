@@ -63,7 +63,7 @@ export default function WorkspacesPage() {
                 {Array.isArray(workspaces) && workspaces.map(workspace => workspaceElement(workspace))}
             </div>
             <Card className={"max-w-[300px]"}>
-                <CardHeader>Create Workspace</CardHeader>
+                <CardHeader className={"text-gray-600"}>Create Workspace</CardHeader>
                 <CardBody>
                     <div>
                         <Input
@@ -75,7 +75,7 @@ export default function WorkspacesPage() {
                     </div>
                 </CardBody>
                 <CardFooter>
-                    <Button onPress={e => createWorkspace(newWorkspaceName)}>Create</Button>
+                    <Button onPress={e => createWorkspace(newWorkspaceName)}>Create Workspace</Button>
                 </CardFooter>
             </Card>
         </DefaultLayout>

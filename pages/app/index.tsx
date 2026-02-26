@@ -256,7 +256,7 @@ export default function App() {
                 onDragStart={() => handleDragStart(event)}
                 onDragEnd={handleDragEnd}
             >
-                <CardHeader className="text-gray-300 flex items-center justify-between">
+                <CardHeader className="text-gray-300 flex items-center justify-between gap-2">
                     {event.title}
                     {event.editable ?
                         <Button onPress={() => setEditingEvent(event)}>Edit</Button>

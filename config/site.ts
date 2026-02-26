@@ -9,6 +9,11 @@ export const siteConfig = {
             href: "/",
         },
         {
+            label: "Register",
+            userHidden: true,
+            href: "/register",
+        },
+        {
             label: "Login",
             userHidden: true,
             href: "/login",
@@ -20,8 +25,8 @@ export const siteConfig = {
             href: "/workspaces",
         },
         {
-            label: "Profile",
-            href: "/profile",
+            label: "Teams",
+            href: "/teams",
         },
         {
             label: "Logout",

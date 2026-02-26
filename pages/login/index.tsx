@@ -20,7 +20,7 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (!user) return;
-        router.push("/app").then(r => {});
+        router.push("/workspaces").then(r => {});
     }, [user]);
 
     const toggleVisibility = () => setIsVisible(!isVisible);
@@ -52,7 +52,7 @@ export default function LoginPage() {
             const returnedUsername = (body.username as string | undefined) || username;
             if (returnedUsername) login({username: returnedUsername});
             setLoading(false);
-            await router.push("/app");
+            await router.push("/workspaces");
         } catch (err: any) {
             if (err.response && err.response.data) {
                 const message = (err.response.data.body && err.response.data.body.errorMessage) || err.response.data.message || "Login failed";
