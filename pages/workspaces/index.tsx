@@ -6,7 +6,6 @@ import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
 import {Dropdown, DropdownItem, DropdownMenu, DropdownTrigger} from "@heroui/dropdown";
 import {Input} from "@heroui/input";
 import {Button} from "@heroui/button";
-import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 
 // varbūt šo var exportēt uz atsevišķu failu, lai varētu izmantot arī citur --Renars
@@ -21,7 +20,6 @@ export default function WorkspacesPage() {
     const [underTeam, setUnderTeam] = useState<number | null>(null);
     const [teams, setTeams] = useState<Team[]>([]);
     // TODO pārmainīt šo uz link, nevis memory --Renars
-    const {setCurrentWorkspace} = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -66,15 +64,22 @@ export default function WorkspacesPage() {
             <div onClick={e => swapToWorkspace(workspace)}>
                 <Card className={"max-w-[300px] mb-4 cursor-pointer"}>
                     <CardHeader>{name}</CardHeader>
-                    <CardFooter>{id}</CardFooter>
+                    <CardFooter>
+                        {id}
+                        <Button
+                            onPress={e => {
+                                router.push(`/workspaces/edit/${id}`).then(r => {
+                                });
+                            }}
+                        >Edit</Button>
+                    </CardFooter>
                 </Card>
             </div>
         )
     }
 
     const swapToWorkspace = async (workspace: Workspace) => {
-        setCurrentWorkspace(workspace.id);
-        await router.push("/app").then(r => {
+        await router.push(`/app/${workspace.id}`).then(r => {
         });
     }
 

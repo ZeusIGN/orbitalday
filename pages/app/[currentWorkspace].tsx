@@ -25,17 +25,31 @@ function getOrdinalSuffix(day: number) {
     }
 }
 
+interface WorkspaceInfo {
+    name: string;
+}
+
 export default function App() {
+    const router = useRouter();
+    const {currentWorkspace} = router.query;
+    if (!currentWorkspace) return null;
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [editOpen, setEditOpen] = useState(false);
     const [editDate, setEditDate] = useState<number | null>(null);
-    const [events, setEvents] = useState<{ [key: number]: DateEvent[] }>({});
+    const [events, setEvents] = useState<{ [key: string]: DateEvent[] }>({});
     const [unsetEvents, setUnsetEvents] = useState<DateEvent[]>([]);
     const [draggedEvent, setDraggedEvent] = useState<DateEvent | null>(null);
     const [editingEvent, setEditingEvent] = useState<DateEvent | null>(null);
-    const {user, currentWorkspace} = useAuth();
-    const router = useRouter();
+    const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
+    const {user} = useAuth();
+
+    useEffect(() => {
+        fetchEvents().then(r => {
+        });
+        fetchWorkspaceInfo().then(r => {
+        });
+    }, [currentWorkspace, selectedMonth, selectedYear]);
 
     useEffect(() => {
         if (user) return;
@@ -43,11 +57,6 @@ export default function App() {
         router.push("/login").then(r => {
         });
     }, [user]);
-
-    useEffect(() => {
-        fetchEvents().then(r => {
-        })
-    }, [currentWorkspace])
 
     const handlePrevMonth = () => {
         if (selectedMonth === 0) {
@@ -286,6 +295,14 @@ export default function App() {
         );
     };
 
+    const createWorkspaceHeader = () => {
+        return (
+            <div className="flex items-center justify-between w-full">
+                <h1 className="text-2xl font-bold text-gray-600">{(workspaceInfo && workspaceInfo.name) || "Workspace"}</h1>
+            </div>
+        );
+    }
+
     const createUnsetEvent = async () => {
         await privateAxios.get("/workspace/" + currentWorkspace + "/createEvent").then(res => {
             fetchEvents()
@@ -293,16 +310,25 @@ export default function App() {
         });
     }
 
+    const fetchWorkspaceInfo = async () => {
+        await privateAxios.get(`/workspace/${currentWorkspace}/info`)
+            .then(res => {
+                const data: WorkspaceInfo = res.data;
+                setWorkspaceInfo(data);
+            }).catch(e => {
+            });
+    }
+
     const fetchEvents = async () => {
-        await privateAxios.get("/workspace/" + currentWorkspace + "/events")
+        await privateAxios.post(`/workspace/${currentWorkspace}/events`, {month: selectedMonth, year: selectedYear})
             .then(res => {
                 const eventsData: DateEvent[] = res.data.events;
-                const newEvents: { [key: number]: DateEvent[] } = {};
+                const newEvents: { [key: string]: DateEvent[] } = {};
                 const newUnset: DateEvent[] = [];
                 Object.values(eventsData).forEach(event => {
                     const dateDue = event.dateDue ? new Date(event.dateDue) : null;
                     const setDate = event.setDate ? new Date(event.setDate) : null;
-                    const dateKey = setDate ? setDate.getDate() : null;
+                    const dateKey = setDate && setDate.getDate();
                     const eventObj: DateEvent = {
                         id: event.id,
                         title: event.title,
@@ -328,10 +354,16 @@ export default function App() {
 
     const updateServer = (event: DateEvent) => {
         // informē server par izmaiņām, lai saglabātu datu consistency --Renars
-        privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {id: event.id, title: event.title, description: event.description, setDate: event.setDate?.getTime(), dateDue: event.dateDue?.getTime(), attendees: event.attendees})
-            .then(res => {})
-            .catch(e => {
-            });
+        privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            setDate: event.setDate?.getTime(),
+            dateDue: event.dateDue?.getTime(),
+            attendees: event.attendees
+        }).then(res => {
+        }).catch(e => {
+        });
     }
 
     const saveCurrentEdit = () => {
@@ -378,12 +410,13 @@ export default function App() {
     }
 
     const eventCount = (date: number) => {
-        if (!events || !events[date]) return 0;
+        if (!events || !hasEvent(date)) return 0;
         return events[date].length;
     }
 
     return (
         <DefaultLayout>
+            {createWorkspaceHeader()}
             {editOpen && editScreen()}
             <div className="flex flex-col items-center justify-center gap-4 max-w-[1500px] mx-auto">
                 {createHeader()}

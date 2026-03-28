@@ -7,12 +7,10 @@ export type AuthUser = {
 
 export type AuthState = {
     user: AuthUser | null;
-    currentWorkspace: string | null;
     isAuthenticated: boolean;
     loading: boolean;
     login: (user: AuthUser) => void;
     logout: () => void;
-    setCurrentWorkspace: (id: string | null) => void;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -21,22 +19,13 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 // --Renars
 export function AuthProvider(props: {children: ReactNode}) {
     const [user, setUser] = useState<AuthUser | null>(null);
-    const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-        if (!currentWorkspace) return;
-        window.localStorage.setItem("currentWorkspace", currentWorkspace);
-    }, [currentWorkspace])
 
     useEffect(() => {
         let active = true;
         if (typeof window !== "undefined") {
             const stored = window.localStorage.getItem("accessToken");
             if (stored) setAccessToken(stored);
-            const storedWorkspace = window.localStorage.getItem("currentWorkspace");
-            if (storedWorkspace) setCurrentWorkspace(storedWorkspace);
         }
         const loadUser = async () => {
             try {
@@ -75,12 +64,10 @@ export function AuthProvider(props: {children: ReactNode}) {
 
     const value: AuthState = {
         user,
-        currentWorkspace: currentWorkspace,
         isAuthenticated: !!user,
         loading,
         login,
         logout,
-        setCurrentWorkspace
     };
 
     return <AuthContext.Provider value={value}>{props.children}</AuthContext.Provider>;
