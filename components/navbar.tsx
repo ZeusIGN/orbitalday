@@ -5,11 +5,14 @@ import clsx from "clsx";
 
 import {siteConfig} from "@/config/site";
 import {ThemeSwitch} from "@/components/theme-switch";
+import {LanguageSwitch} from "@/components/language-switch";
 import {Logo,} from "@/components/icons";
 import {useAuth} from "@/context/AuthContext";
+import {useTranslation} from "@/context/TranslationContext";
 
 export const Navbar = () => {
     const {user} = useAuth();
+    const {t} = useTranslation();
 
     return (
         <HeroUINavbar maxWidth="xl" position="sticky">
@@ -17,7 +20,7 @@ export const Navbar = () => {
                 <NavbarBrand className="gap-3 max-w-fit">
                     <NextLink className="flex justify-start items-center gap-1" href="/">
                         <Logo/>
-                        <p className="font-bold text-inherit">Orbital</p>
+                        <p className="font-bold text-inherit">{t("app.name")}</p>
                     </NextLink>
                 </NavbarBrand>
                 <div className="hidden lg:flex gap-4 justify-start ml-2">
@@ -31,7 +34,7 @@ export const Navbar = () => {
                                 color="foreground"
                                 href={item.href}
                             >
-                                {item.label}
+                                {t(item.labelKey, item.label)}
                             </NextLink>
                         </NavbarItem>
                     ))}
@@ -54,10 +57,11 @@ export const Navbar = () => {
                                     color="foreground"
                                     href={item.href}
                                 >
-                                    {item.label}
+                                    {t(item.labelKey, item.label)}
                                 </NextLink>
                             </NavbarItem>
                         ))}
+                        <LanguageSwitch/>
                         <ThemeSwitch/>
                     </div>
                 </NavbarItem>

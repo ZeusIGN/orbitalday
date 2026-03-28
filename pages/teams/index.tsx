@@ -5,12 +5,14 @@ import {privateAxios} from "@/api";
 import {useEffect, useState} from "react";
 import {Input} from "@heroui/input";
 import {useRouter} from "next/router";
+import {useTranslation} from "@/context/TranslationContext";
 
 export default function TeamsPage() {
     const [teams, setTeams] = useState<{ teamName: string, teamID: number }[]>([]);
     const [invites, setInvites] = useState<{ teamName: string, teamID: number }[]>([]);
     const [creatingTeamName, setCreatingTeamName] = useState("");
     const router = useRouter();
+    const {t} = useTranslation();
 
     useEffect(() => {
         fetchTeams();
@@ -63,7 +65,7 @@ export default function TeamsPage() {
             <div onClick={e => router.push("/teams/manage/" + teamID)}>
                 <Card className={"max-w-[300px] min-w-[100px] mb-4 cursor-pointer"}>
                     <CardHeader>{teamName}</CardHeader>
-                    <CardFooter>ID: {teamID}</CardFooter>
+                    <CardFooter>{t("common.id")}: {teamID}</CardFooter>
                 </Card>
             </div>
         )
@@ -72,17 +74,17 @@ export default function TeamsPage() {
     const createNewTeamCard = () => {
         return (
             <Card className={"max-w-[300px] mb-4 cursor-pointer"}>
-                <CardHeader className={"text-gray-600"}>Create a new team</CardHeader>
+                <CardHeader className={"text-gray-600"}>{t("teams.createNewTeam")}</CardHeader>
                 <CardBody>
                     <Input
-                        placeholder={"Enter team name"}
-                        label={"Team Name"}
+                        placeholder={t("teams.enterTeamName")}
+                        label={t("teams.teamName")}
                         value={creatingTeamName}
                         onChange={e => setCreatingTeamName(e.target.value)}
                     />
                 </CardBody>
                 <CardFooter>
-                    <Button disabled={!creatingTeamName} onPress={e => createTeam()}>Create Team</Button>
+                    <Button disabled={!creatingTeamName} onPress={e => createTeam()}>{t("teams.createTeam")}</Button>
                 </CardFooter>
             </Card>
         )
@@ -91,12 +93,12 @@ export default function TeamsPage() {
     const createInviteCard = (teamName: string, teamID: number) => {
         return (
             <Card className={"max-w-[300px] mb-4cursor-pointer"}>
-                <CardHeader className={"text-gray-600"}>You've been invited to {teamName}!</CardHeader>
+                <CardHeader className={"text-gray-600"}>{t("teams.invitedTo").replace("{teamName}", teamName)}</CardHeader>
                 <CardBody>
-                    <p className={"text-gray-500"}>Join the team to collaborate on projects and tasks.</p>
+                    <p className={"text-gray-500"}>{t("teams.joinTeamDescription")}</p>
                 </CardBody>
                 <CardFooter>
-                    <Button onPress={e => acceptInvite(teamID)}>Join {teamName}</Button>
+                    <Button onPress={e => acceptInvite(teamID)}>{t("common.join")} {teamName}</Button>
                 </CardFooter>
             </Card>
         )

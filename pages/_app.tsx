@@ -7,6 +7,7 @@ import {useRouter} from "next/router";
 import {fontMono, fontSans} from "@/config/fonts";
 import "@/styles/globals.css";
 import {AuthProvider} from "@/context/AuthContext";
+import {TranslationProvider} from "@/context/TranslationContext";
 import {ToastProvider} from "@heroui/toast";
 
 export default function App({Component, pageProps}: AppProps) {
@@ -15,10 +16,12 @@ export default function App({Component, pageProps}: AppProps) {
     return (
         <HeroUIProvider navigate={router.push}>
             <NextThemesProvider attribute="class" defaultTheme="light">
-                <AuthProvider>
-                    <ToastProvider/>
-                    <Component {...pageProps} />
-                </AuthProvider>
+                <TranslationProvider>
+                    <AuthProvider>
+                        <ToastProvider/>
+                        <Component {...pageProps} />
+                    </AuthProvider>
+                </TranslationProvider>
             </NextThemesProvider>
         </HeroUIProvider>
     );

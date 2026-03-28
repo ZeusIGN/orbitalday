@@ -6,20 +6,31 @@ import {title} from "@/components/primitives";
 import {useState} from "react";
 import {privateAxios} from "@/api";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@/components/icons";
+import {translateServerMessage, useTranslation} from "@/context/TranslationContext";
 
 export default function RegisterPage() {
     const [displayName, setDisplayName] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [isVisible, setIsVisible] = useState(false);
+    const [isConfirmVisible, setIsConfirmVisible] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const {t} = useTranslation();
 
     const toggleVisibility = () => setIsVisible(!isVisible);
+    const toggleConfirmVisibility = () => setIsConfirmVisible(!isConfirmVisible);
+
+    const passwordsMatch = password === confirmPassword;
 
     const onSubmit = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         if (!username || !password) return;
+        if (!passwordsMatch) {
+            setError(t("auth.passwordsDoNotMatch"));
+            return;
+        }
         setError("");
         setLoading(true);
         privateAxios.post("/user/register", {username, password, displayName, email: ""}).then(response => {
@@ -27,7 +38,7 @@ export default function RegisterPage() {
             window.location.href = "/login";
         }).catch(err => {
             if (err.response && err.response.data) {
-                const message = err.response.data || "Registration failed";
+                const message = translateServerMessage(err.response.data, t) || t("auth.registrationFailed");
                 setError(message);
             }
             setLoading(false);
@@ -39,7 +50,7 @@ export default function RegisterPage() {
             <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
                 <Card className="w-full max-w-md">
                     <CardHeader>
-                        <span className={title({color: "violet", size: "usm"})}>Register</span>
+                        <span className={title({color: "violet", size: "usm"})}>{t("auth.register")}</span>
                     </CardHeader>
                     <CardBody>
                         <form onSubmit={onSubmit} className="flex flex-col">
@@ -47,8 +58,8 @@ export default function RegisterPage() {
                                 isRequired
                                 className="mb-4"
                                 color="default"
-                                placeholder="Enter your username or email"
-                                label="Username"
+                                placeholder={t("auth.enterUsername")}
+                                label={t("auth.username")}
                                 onChange={(e) => setUsername(e.target.value)}
                                 value={username}
                             />
@@ -56,19 +67,19 @@ export default function RegisterPage() {
                                 isRequired
                                 className="mb-4"
                                 color="default"
-                                placeholder="Enter your display name"
-                                label="Display Name"
+                                placeholder={t("auth.enterDisplayName")}
+                                label={t("auth.displayName")}
                                 onChange={(e) => setDisplayName(e.target.value)}
                                 value={displayName}
                             />
                             <Input
                                 isRequired
                                 className="mb-4"
-                                placeholder="Enter your password"
-                                label="Password"
+                                placeholder={t("auth.enterPassword")}
+                                label={t("auth.password")}
                                 endContent={
                                     <button
-                                        aria-label="toggle password visibility"
+                                        aria-label={t("auth.togglePasswordVisibility")}
                                         className="focus:outline-solid outline-transparent"
                                         type="button"
                                         onClick={toggleVisibility}
@@ -85,8 +96,34 @@ export default function RegisterPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 value={password}
                             />
-                            <Button color="default" type="submit" isDisabled={loading} isLoading={loading}>
-                                Submit
+                            <Input
+                                isRequired
+                                className="mb-4"
+                                placeholder={t("auth.confirmPasswordPlaceholder")}
+                                label={t("auth.confirmPassword")}
+                                isInvalid={confirmPassword.length > 0 && !passwordsMatch}
+                                errorMessage={confirmPassword.length > 0 && !passwordsMatch ? t("auth.passwordsDoNotMatch") : ""}
+                                endContent={
+                                    <button
+                                        aria-label={t("auth.togglePasswordVisibility")}
+                                        className="focus:outline-solid outline-transparent"
+                                        type="button"
+                                        onClick={toggleConfirmVisibility}
+                                    >
+                                        {isConfirmVisible ? (
+                                            <EyeSlashFilledIcon
+                                                className="text-2xl text-default-400 pointer-events-none"/>
+                                        ) : (
+                                            <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none"/>
+                                        )}
+                                    </button>
+                                }
+                                type={isConfirmVisible ? "text" : "password"}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                value={confirmPassword}
+                            />
+                            <Button color="default" type="submit" isDisabled={loading || !passwordsMatch} isLoading={loading}>
+                                {t("common.submit")}
                             </Button>
                         </form>
                     </CardBody>

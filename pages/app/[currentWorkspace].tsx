@@ -7,10 +7,8 @@ import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 import {Input} from "@heroui/input";
 import {privateAxios} from "@/api";
+import {useTranslation} from "@/context/TranslationContext";
 
-const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-// funkcija, kas atgriež dienas skaitļa kārtas piedēkli (1st, 2nd, 3rd, 4th, utt.) --Renars
 function getOrdinalSuffix(day: number) {
     if (day > 3 && day < 21) return 'th';
     switch (day % 10) {
@@ -32,6 +30,7 @@ interface WorkspaceInfo {
 export default function App() {
     const router = useRouter();
     const {currentWorkspace} = router.query;
+    const {t} = useTranslation();
     if (!currentWorkspace) return null;
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -44,6 +43,31 @@ export default function App() {
     const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
     const {user} = useAuth();
 
+    const dayNames = [
+        t("calendar.day.sun"),
+        t("calendar.day.mon"),
+        t("calendar.day.tue"),
+        t("calendar.day.wed"),
+        t("calendar.day.thu"),
+        t("calendar.day.fri"),
+        t("calendar.day.sat")
+    ];
+
+    const monthNames = [
+        t("calendar.month.january"),
+        t("calendar.month.february"),
+        t("calendar.month.march"),
+        t("calendar.month.april"),
+        t("calendar.month.may"),
+        t("calendar.month.june"),
+        t("calendar.month.july"),
+        t("calendar.month.august"),
+        t("calendar.month.september"),
+        t("calendar.month.october"),
+        t("calendar.month.november"),
+        t("calendar.month.december")
+    ];
+
     useEffect(() => {
         fetchEvents().then(r => {
         });
@@ -53,7 +77,6 @@ export default function App() {
 
     useEffect(() => {
         if (user) return;
-        // ja nav users, tad pārvieto uz login page --Renars
         router.push("/login").then(r => {
         });
     }, [user]);
@@ -114,7 +137,6 @@ export default function App() {
         if (!draggedEvent) return;
         const newEvents = {...events};
         draggedEvent.setDate = null;
-        // dupe check, lai neizveidotos dublikāti, ja eventu velk no viena datuma uz to pašu datumu --Renars
         if (editDate != null && unsetEvents.some(e => e.id === draggedEvent.id)) return;
         if (editDate != null && newEvents[editDate]) {
             newEvents[editDate] = newEvents[editDate].filter(e => e.id !== draggedEvent.id);
@@ -133,11 +155,11 @@ export default function App() {
                     <CardHeader className={"flex justify-between"}>
                         <span>{date}</span>
                         <span
-                            className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == today().toString()) ? "Today" : "")}</span>
+                            className={"text-gray-400"}>{((month && year && createDate(date, month, year).toString() == today().toString()) ? t("calendar.today") : "")}</span>
                     </CardHeader>
                     <CardBody>
                         <div
-                            className="text-sm text-gray-500">{hasEvent(date) ? eventCount(date) + " Event" + (eventCount(date) == 1 ? "" : "s") : "No Events"}</div>
+                            className="text-sm text-gray-500">{hasEvent(date) ? eventCount(date) + " " + t("calendar.event") + (eventCount(date) == 1 ? "" : "s") : t("calendar.noEvents")}</div>
                     </CardBody>
                 </Card>
             </div>
@@ -148,11 +170,6 @@ export default function App() {
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const cells = [];
-        // sākam ar tukšām šūnām līdz pirmajai dienai
-        // pirmais dienas objekts tiek izveidots, lai noteiktu, kurā dienā sākas mēnesis
-        // pēc tam pievienojam šūnas katrai dienai mēnesī
-        // beidzot, ja pēdējā diena nekrīt uz sestdienu, pievienojam tukšas šūnas līdz nedēļas beigām
-        // --Renars
         for (let i = 0; i < firstDay; i++) {
             cells.push(createDateCell(null, `empty-start-${i}`));
         }
@@ -176,7 +193,7 @@ export default function App() {
                     <button onClick={handlePrevMonth}
                             className="text-lg px-2 py-1 rounded hover:bg-gray-600">&#8592;</button>
                     <div className="text-lg font-medium text-gray-700 text-center w-full">
-                        {new Date(selectedYear, selectedMonth).toLocaleString('default', {month: 'long'})}
+                        {monthNames[selectedMonth]}
                         <span className="text-sm text-gray-500"> {selectedYear}</span>
                     </div>
                     <button onClick={handleNextMonth}
@@ -199,13 +216,13 @@ export default function App() {
                 {editingEvent && editEventScreen()}
                 <Card className="p-2" onDrop={handleCurrEditDrop} onDragOver={e => e.preventDefault()}>
                     <CardHeader className="flex items-center justify-between">
-                        {new Date(selectedYear, selectedMonth).toLocaleString('default', {month: 'long'})} {editDate}{getOrdinalSuffix(editDate!)}
+                        {monthNames[selectedMonth]} {editDate}{getOrdinalSuffix(editDate!)}
                         <button onClick={handleCloseEdit} className="text-xl px-1 py-0 rounded hover:bg-gray-600">
                             &times;
                         </button>
                     </CardHeader>
                     <CardBody className="justify-between flex-col gap-4">
-                        {!hasEvent(editDate!) && <p className="text-gray-500">No events for this day.</p>}
+                        {!hasEvent(editDate!) && <p className="text-gray-500">{t("calendar.noEventsForDay")}</p>}
                         {hasEvent(editDate!) && events[editDate!].map(ev => (
                             createEventElement(ev)
                         ))}
@@ -220,12 +237,12 @@ export default function App() {
             <div className="fixed inset-y-0 right-0 z-50 w-1/4 p-4">
                 <Card onDrop={handleSidebarDrop} onDragOver={e => e.preventDefault()} className="h-full">
                     <CardHeader className="flex items-center justify-between">
-                        <span className="text-lg font-medium text-gray-600">Available Events</span>
-                        <Button onPress={e => createUnsetEvent()}>Create Event</Button>
+                        <span className="text-lg font-medium text-gray-600">{t("calendar.availableEvents")}</span>
+                        <Button onPress={e => createUnsetEvent()}>{t("calendar.createEvent")}</Button>
                     </CardHeader>
                     <CardBody>
                         {getUnsetEvents() && getUnsetEvents().length == 0 &&
-                            <p className="text-gray-500">No events!</p>}
+                            <p className="text-gray-500">{t("calendar.noEvents")}!</p>}
                         {Array.isArray(getUnsetEvents()) && getUnsetEvents().map(event => createEventElement(event))}
                     </CardBody>
                     <CardFooter>
@@ -243,16 +260,16 @@ export default function App() {
                         <Input
                             defaultValue={editingEvent?.title}
                             labelPlacement={"outside"}
-                            placeholder={"Set title"}
-                            label={"Title"}
+                            placeholder={t("calendar.setTitle")}
+                            label={t("calendar.title")}
                             onChange={e => setEditingEvent({...editingEvent!, title: e.target.value})}
                         />
                     </CardHeader>
                     <CardBody>
                         <Input
                             labelPlacement={"outside"}
-                            placeholder={"Set due date"}
-                            label={"Due date"}
+                            placeholder={t("calendar.setDueDate")}
+                            label={t("calendar.dueDate")}
                             onChange={e => setEditingEvent({...editingEvent!, dateDue: new Date(e.target.value)})}
                             type={"datetime-local"}
                         />
@@ -261,8 +278,8 @@ export default function App() {
                                   className="w-full h-32 p-2 border-1 border-gray-500 rounded-s mt-4"/>
                     </CardBody>
                     <CardFooter className="flex gap-2">
-                        <Button onPress={e => saveCurrentEdit()}>Save</Button>
-                        <Button onPress={e => setEditingEvent(null)}>Close</Button>
+                        <Button onPress={e => saveCurrentEdit()}>{t("common.save")}</Button>
+                        <Button onPress={e => setEditingEvent(null)}>{t("calendar.close")}</Button>
                     </CardFooter>
                 </Card>
             </div>
@@ -280,7 +297,7 @@ export default function App() {
                 <CardHeader className="text-gray-300 flex items-center justify-between gap-2">
                     {event.title}
                     {event.editable ?
-                        <Button onPress={() => setEditingEvent(event)}>Edit</Button>
+                        <Button onPress={() => setEditingEvent(event)}>{t("common.edit")}</Button>
                         : ""}
                 </CardHeader>
                 <CardBody>
@@ -288,7 +305,7 @@ export default function App() {
                 </CardBody>
                 <CardFooter>
                     {event.dateDue && <span className="text-sm text-gray-500">
-                        Due: {event.dateDue?.toLocaleDateString()} {event.dateDue?.toLocaleTimeString()}
+                        {t("calendar.due")}: {event.dateDue?.toLocaleDateString()} {event.dateDue?.toLocaleTimeString()}
                     </span>}
                 </CardFooter>
             </Card>
@@ -298,7 +315,7 @@ export default function App() {
     const createWorkspaceHeader = () => {
         return (
             <div className="flex items-center justify-between w-full">
-                <h1 className="text-2xl font-bold text-gray-600">{(workspaceInfo && workspaceInfo.name) || "Workspace"}</h1>
+                <h1 className="text-2xl font-bold text-gray-600">{(workspaceInfo && workspaceInfo.name) || t("workspaces.title")}</h1>
             </div>
         );
     }
@@ -353,7 +370,6 @@ export default function App() {
     }
 
     const updateServer = (event: DateEvent) => {
-        // informē server par izmaiņām, lai saglabātu datu consistency --Renars
         privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {
             id: event.id,
             title: event.title,

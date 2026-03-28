@@ -6,15 +6,18 @@ export const siteConfig = {
     gloabalNavItem: [
         {
             label: "Home",
+            labelKey: "nav.home",
             href: "/",
         },
         {
             label: "Register",
+            labelKey: "nav.register",
             userHidden: true,
             href: "/register",
         },
         {
             label: "Login",
+            labelKey: "nav.login",
             userHidden: true,
             href: "/login",
         },
@@ -22,14 +25,17 @@ export const siteConfig = {
     navItemsLoggedIn: [
         {
             label: "Workspaces",
+            labelKey: "nav.workspaces",
             href: "/workspaces",
         },
         {
             label: "Teams",
+            labelKey: "nav.teams",
             href: "/teams",
         },
         {
             label: "Logout",
+            labelKey: "nav.logout",
             href: "/logout",
         },
     ],

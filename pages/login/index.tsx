@@ -8,7 +8,7 @@ import {privateAxios, setAccessToken} from "@/api";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
 import {EyeFilledIcon, EyeSlashFilledIcon} from "@/components/icons";
-import {addToast} from "@heroui/toast";
+import {translateServerMessage, useTranslation} from "@/context/TranslationContext";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -18,6 +18,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const {login, user} = useAuth();
     const router = useRouter();
+    const {t} = useTranslation();
 
     useEffect(() => {
         if (!user) return;
@@ -40,8 +41,8 @@ export default function LoginPage() {
             const response = await privateAxios.post("/user/login", {username, password});
             const status = response.status;
             if (status !== 200) {
-                const message = (response.data && response.data.body && response.data.body.errorMessage) || "Login failed";
-                handleError(message);
+                const message = (response.data && response.data.body && response.data.body.errorMessage) || t("auth.loginFailed");
+                handleError(translateServerMessage(message, t));
                 return;
             }
             const body = response.data.body || response.data;
@@ -56,8 +57,8 @@ export default function LoginPage() {
             setLoading(false);
             await router.push("/workspaces");
         } catch (err: any) {
-            if (err.response.data.errorMessage) handleError(err.response.data.errorMessage)
-            else handleError("Unable to login. Please try again.");
+            if (err.response?.data?.errorMessage) handleError(translateServerMessage(err.response.data.errorMessage, t))
+            else handleError(t("auth.loginFailed"));
         }
     };
 
@@ -66,7 +67,7 @@ export default function LoginPage() {
             <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <span className={title({color: "violet", size: "usm"})}>Login</span>
+                    <span className={title({color: "violet", size: "usm"})}>{t("auth.login")}</span>
                 </CardHeader>
                 <CardBody>
                     <form onSubmit={onSubmit} className="flex flex-col">
@@ -74,19 +75,19 @@ export default function LoginPage() {
                             isRequired
                             className="mb-4"
                             color="default"
-                            placeholder="Enter your username or email"
-                            label="Username"
+                            placeholder={t("auth.enterUsername")}
+                            label={t("auth.username")}
                             onChange={(e) => setUsername(e.target.value)}
                             value={username}
                         />
                         <Input
                             isRequired
                             className="mb-4"
-                            placeholder="Enter your password"
-                            label="Password"
+                            placeholder={t("auth.enterPassword")}
+                            label={t("auth.password")}
                             endContent={
                                 <button
-                                    aria-label="toggle password visibility"
+                                    aria-label={t("auth.togglePasswordVisibility")}
                                     className="focus:outline-solid outline-transparent"
                                     type="button"
                                     onClick={toggleVisibility}
@@ -103,7 +104,7 @@ export default function LoginPage() {
                             value={password}
                         />
                         <Button color="default" type="submit" isDisabled={loading} isLoading={loading}>
-                            Submit
+                            {t("common.submit")}
                         </Button>
                     </form>
                 </CardBody>
