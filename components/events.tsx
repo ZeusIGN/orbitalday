@@ -1,3 +1,9 @@
+export interface Label {
+    id: number;
+    name: string;
+    color: string;
+}
+
 export interface DateEvent {
     id: number;
     title: string;
@@ -5,6 +11,7 @@ export interface DateEvent {
     setDate: Date | null;
     dateDue: Date | null;
     attendees: number[];
+    label: string;
     editable: boolean;
 }
 
@@ -16,6 +23,7 @@ export const sampleEvents: DateEvent[] = [
         setDate: null,
         dateDue: new Date(2026, 1, 10, 15, 0),
         attendees: [0, 1],
+        label: "",
         editable: false
     },
     {
@@ -25,6 +33,7 @@ export const sampleEvents: DateEvent[] = [
         setDate: null,
         dateDue: null,
         attendees: [0],
+        label: "",
         editable: true
     }
 ];

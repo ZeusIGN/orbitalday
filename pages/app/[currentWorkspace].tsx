@@ -1,7 +1,7 @@
 import DefaultLayout from "@/layouts/default";
 import {Card, CardBody, CardFooter, CardHeader} from "@heroui/card";
 import {useEffect, useState} from "react";
-import {DateEvent} from "@/components/events";
+import {DateEvent, Label} from "@/components/events";
 import {Button} from "@heroui/button";
 import {useAuth} from "@/context/AuthContext";
 import {useRouter} from "next/router";
@@ -41,6 +41,10 @@ export default function App() {
     const [draggedEvent, setDraggedEvent] = useState<DateEvent | null>(null);
     const [editingEvent, setEditingEvent] = useState<DateEvent | null>(null);
     const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
+    const [labels, setLabels] = useState<Label[]>([]);
+    const [showLabelManager, setShowLabelManager] = useState(false);
+    const [newLabelName, setNewLabelName] = useState("");
+    const [newLabelColor, setNewLabelColor] = useState("#3b82f6");
     const {user} = useAuth();
 
     const dayNames = [
@@ -72,6 +76,8 @@ export default function App() {
         fetchEvents().then(r => {
         });
         fetchWorkspaceInfo().then(r => {
+        });
+        fetchLabels().then(r => {
         });
     }, [currentWorkspace, selectedMonth, selectedYear]);
 
@@ -263,7 +269,7 @@ export default function App() {
 
     const editEventScreen = () => {
         return (
-            <div className="fixed bottom-1/2 left-1/8 z-50 w-1/4 p-4">
+            <div className="fixed bottom-1/3 left-1/8 z-50 w-1/4 p-4">
                 <Card className="p-4">
                     <CardHeader>
                         <Input
@@ -282,6 +288,34 @@ export default function App() {
                             onChange={e => setEditingEvent({...editingEvent!, dateDue: new Date(e.target.value)})}
                             type={"datetime-local"}
                         />
+                        <div className="mt-4">
+                            <label className="text-sm text-gray-400">{t("calendar.label")}</label>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                <button
+                                    className={`px-3 py-1 rounded text-sm ${!editingEvent?.label ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-700"}`}
+                                    onClick={() => setEditingEvent({...editingEvent!, label: ""})}
+                                >
+                                    {t("common.none")}
+                                </button>
+                                {labels.map(label => (
+                                    <button
+                                        key={label.name}
+                                        className={`px-3 py-1 rounded text-sm ${editingEvent?.label === label.name ? "ring-2 ring-white" : ""}`}
+                                        style={{backgroundColor: label.color}}
+                                        onClick={() => setEditingEvent({...editingEvent!, label: label.name})}
+                                    >
+                                        {label.name}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                className="text-sm text-blue-400 hover:underline mt-2"
+                                onClick={() => setShowLabelManager(!showLabelManager)}
+                            >
+                                {t("calendar.manageLabels")}
+                            </button>
+                            {showLabelManager && labelManagerPanel()}
+                        </div>
                         <textarea defaultValue={editingEvent?.description}
                                   onChange={e => setEditingEvent({...editingEvent!, description: e.target.value})}
                                   className="w-full h-32 p-2 border-1 border-gray-500 rounded-s mt-4"/>
@@ -295,7 +329,50 @@ export default function App() {
         );
     }
 
+    const labelManagerPanel = () => {
+        return (
+            <div className="mt-2 p-3 bg-gray-800 rounded">
+                <div className="text-sm font-medium mb-2">{t("calendar.createLabel")}</div>
+                <div className="flex gap-2 items-center mb-3">
+                    <Input
+                        size="sm"
+                        placeholder={t("calendar.labelName")}
+                        value={newLabelName}
+                        onChange={e => setNewLabelName(e.target.value)}
+                        className="flex-1"
+                    />
+                    <input
+                        type="color"
+                        value={newLabelColor}
+                        onChange={e => setNewLabelColor(e.target.value)}
+                        className="w-8 h-8 rounded cursor-pointer"
+                    />
+                    <Button size="sm" onPress={() => addLabel()}>{t("common.create")}</Button>
+                </div>
+                {labels.length > 0 && (
+                    <div>
+                        <div className="text-sm font-medium mb-2">{t("calendar.existingLabels")}</div>
+                        <div className="flex flex-wrap gap-2">
+                            {labels.map(label => (
+                                <div key={label.id} className="flex items-center gap-1 px-2 py-1 rounded" style={{backgroundColor: label.color}}>
+                                    <span className="text-sm">{label.name}</span>
+                                    <button
+                                        className="text-xs hover:text-red-400 ml-1"
+                                        onClick={() => removeLabel(label.id)}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     const createEventElement = (event: DateEvent) => {
+        const eventLabel = event.label ? getLabelByName(event.label) : undefined;
         return (
             <Card
                 key={event.id} className="p-2 border rounded mb-2"
@@ -304,7 +381,17 @@ export default function App() {
                 onDragEnd={handleDragEnd}
             >
                 <CardHeader className="text-gray-300 flex items-center justify-between gap-2">
-                    {event.title}
+                    <div className="flex items-center gap-2">
+                        {eventLabel && (
+                            <span
+                                className="px-2 py-0.5 rounded text-xs"
+                                style={{backgroundColor: eventLabel.color}}
+                            >
+                                {eventLabel.name}
+                            </span>
+                        )}
+                        {event.title}
+                    </div>
                     {event.editable ?
                         <Button onPress={() => setEditingEvent(event)}>{t("common.edit")}</Button>
                         : ""}
@@ -362,6 +449,7 @@ export default function App() {
                         dateDue: dateDue,
                         setDate: setDate,
                         attendees: event.attendees,
+                        label: event.label || "",
                         editable: event.editable
                     };
                     if (dateKey) {
@@ -378,6 +466,41 @@ export default function App() {
             });
     }
 
+    const fetchLabels = async () => {
+        await privateAxios.get(`/workspace/${currentWorkspace}/labels`)
+            .then(res => {
+                setLabels(res.data);
+            }).catch(e => {
+            });
+    }
+
+    const addLabel = async () => {
+        if (!newLabelName.trim()) return;
+        await privateAxios.post(`/workspace/${currentWorkspace}/labels`, {
+            id: -1,
+            name: newLabelName.trim(),
+            color: newLabelColor
+        }).then(res => {
+            fetchLabels();
+            setNewLabelName("");
+            setNewLabelColor("#3b82f6");
+        }).catch(e => {
+        });
+    }
+
+    const removeLabel = async (labelId: number) => {
+        await privateAxios.delete(`/workspace/${currentWorkspace}/labels`, {
+            data: labelId
+        }).then(res => {
+            fetchLabels();
+        }).catch(e => {
+        });
+    }
+
+    const getLabelByName = (name: string): Label | undefined => {
+        return labels.find(l => l.name === name);
+    }
+
     const updateServer = (event: DateEvent) => {
         privateAxios.post("/workspace/" + currentWorkspace + "/updateEvent", {
             id: event.id,
@@ -385,7 +508,8 @@ export default function App() {
             description: event.description,
             setDate: event.setDate?.getTime(),
             dateDue: event.dateDue?.getTime(),
-            attendees: event.attendees
+            attendees: event.attendees,
+            label: event.label
         }).then(res => {
         }).catch(e => {
         });
