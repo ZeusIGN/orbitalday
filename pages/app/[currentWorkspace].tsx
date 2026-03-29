@@ -202,7 +202,16 @@ export default function App() {
                 <div className="grid grid-cols-7 w-full">
                     {dayNames.map((name, idx) => (
                         <div
-                            className="w-[180px] h-[32px] text-center text-xs font-semibold text-gray-600 flex items-center justify-center"
+                            className={`
+                            ${idx === 6 || idx == 0 ? "text-red-500" : "text-gray-600"}
+                            w-[180px] 
+                            h-[32px] 
+                            text-center 
+                            text-xs 
+                            font-semibold 
+                            flex 
+                            items-center 
+                            justify-center`}
                             key={idx}>{name}</div>
                     ))}
                 </div>

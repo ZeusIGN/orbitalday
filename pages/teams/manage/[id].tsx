@@ -101,7 +101,9 @@ export default function TeamManagePage() {
             const data: Member[] = response.data || [];
             setTeamMembers(data);
             const currentUser = data.find(m => m.username === user?.username);
-            setUserPermissions(getPerms(currentUser));
+            const perms = getPerms(currentUser);
+            if (isTeamOwner(currentUser)) perms["admin"] = true;
+            setUserPermissions(perms);
             setIsOwner(isTeamOwner(currentUser));
         }).catch(() => {});
     };

@@ -32,7 +32,7 @@ export default function WorkspaceEditPage() {
 
     useEffect(() => {
         if (!id) return;
-        fetchWorkspaceData();
+        fetchWorkspaceData().then(r => {});
     }, [id]);
 
     const fetchWorkspaceData = async () => {
@@ -42,7 +42,8 @@ export default function WorkspaceEditPage() {
             const data: WorkspaceInfo = infoResponse.data;
             setWorkspace(data);
             setIsTeamWorkspace(false);
-            if (!!data.teamId) throw new Error("Not a team workspace");
+            const teamID = data.teamId;
+            if (teamID === -1) throw new Error("Not a team workspace");
             setIsTeamWorkspace(true);
             const [rolesResponse, workspaceRolesResponse] = await Promise.all([
                 privateAxios.get(`/team/${data.teamId}/roles`),
