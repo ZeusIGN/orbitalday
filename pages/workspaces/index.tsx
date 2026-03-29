@@ -49,7 +49,7 @@ export default function WorkspacesPage() {
 
             const loadedWorkspaces: Workspace[] = [];
             for (const key in data) {
-                loadedWorkspaces.push({id: key, name: data[key], canEdit: false});
+                loadedWorkspaces.push({id: key, name: data[key], canEdit: false, teamName: null});
             }
 
             const workspacesWithPermissions = await Promise.all(
@@ -57,7 +57,11 @@ export default function WorkspacesPage() {
                     try {
                         const infoResponse = await privateAxios.get(`/workspace/${workspace.id}/info`);
                         const info = infoResponse.data;
-                        return {...workspace, canEdit: info.canEdit === true};
+                        return {
+                            ...workspace, 
+                            canEdit: info.canEdit === true,
+                            teamName: info.teamName || null
+                        };
                     } catch (e) {
                         return workspace;
                     }
@@ -88,13 +92,14 @@ export default function WorkspacesPage() {
     const createWorkspaceCard = (workspace: Workspace) => {
         const id = typeof workspace.id === 'object' ? JSON.stringify(workspace.id) : String(workspace.id);
         const name = typeof workspace.name === 'object' ? JSON.stringify(workspace.name) : String(workspace.name);
+        const teamDisplay = workspace.teamName || t("workspaces.noTeam");
 
         return (
             <div key={id} onClick={() => swapToWorkspace(workspace)}>
-                <Card className="max-w-[300px] mb-4 cursor-pointer">
+                <Card className="min-w-[150px] max-w-[300px] mb-4 cursor-pointer">
                     <CardHeader>{name}</CardHeader>
-                    <CardFooter className="flex justify-between">
-                        <span>{id}</span>
+                    <CardFooter className="flex justify-between gap-2">
+                        <span>{teamDisplay}</span>
                         {workspace.canEdit && (
                             <div>
                                 <Button onPress={() => handleEditClick(id)} size="sm">

@@ -118,6 +118,8 @@ const en_US: Record<string, string> = {
     "permissions.manage_members": "Manage Members",
     "permissions.manage_team": "Manage Team",
     "permissions.admin": "Admin",
+    "permissions.edit_cards": "Edit Cards",
+    "permissions.edit_workspaces": "Edit Workspaces",
 
     "workspaces.title": "Workspaces",
     "workspaces.create": "Create Workspace",
@@ -160,6 +162,8 @@ const en_US: Record<string, string> = {
     "calendar.createLabel": "Create Label",
     "calendar.labelName": "Label name",
     "calendar.existingLabels": "Existing Labels",
+    "calendar.attendees": "Attendees",
+    "calendar.addAttendee": "Add Attendee",
     "calendar.month.january": "January",
     "calendar.month.february": "February",
     "calendar.month.march": "March",

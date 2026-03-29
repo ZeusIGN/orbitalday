@@ -118,6 +118,8 @@ const lv_LV: Record<string, string> = {
     "permissions.manage_members": "Pārvaldīt dalībniekus",
     "permissions.manage_team": "Pārvaldīt komandu",
     "permissions.admin": "Administrators",
+    "permissions.edit_cards": "Rediģēt kartes",
+    "permissions.edit_workspaces": "Rediģēt darba vietas",
 
     "workspaces.title": "Darba vietas",
     "workspaces.create": "Izveidot darba vietu",
@@ -160,6 +162,8 @@ const lv_LV: Record<string, string> = {
     "calendar.createLabel": "Izveidot iezīmi",
     "calendar.labelName": "Iezīmes nosaukums",
     "calendar.existingLabels": "Esošās iezīmes",
+    "calendar.attendees": "Dalībnieki",
+    "calendar.addAttendee": "Pievienot dalībnieku",
     "calendar.month.january": "Janvāris",
     "calendar.month.february": "Februāris",
     "calendar.month.march": "Marts",

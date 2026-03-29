@@ -25,6 +25,20 @@ function getOrdinalSuffix(day: number) {
 
 interface WorkspaceInfo {
     name: string;
+    teamId: number;
+    canEdit: boolean;
+    teamName: string;
+    canEditCards?: boolean;
+}
+
+interface TeamMember {
+    userId?: number;
+    username: string;
+    role: string;
+    permissions: Record<string, boolean>;
+    additionalInfo: {
+        teamOwner?: boolean;
+    };
 }
 
 export default function App() {
@@ -41,6 +55,7 @@ export default function App() {
     const [draggedEvent, setDraggedEvent] = useState<DateEvent | null>(null);
     const [editingEvent, setEditingEvent] = useState<DateEvent | null>(null);
     const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceInfo | null>(null);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [labels, setLabels] = useState<Label[]>([]);
     const [showLabelManager, setShowLabelManager] = useState(false);
     const [newLabelName, setNewLabelName] = useState("");
@@ -82,6 +97,13 @@ export default function App() {
     }, [currentWorkspace, selectedMonth, selectedYear]);
 
     useEffect(() => {
+        const teamID = workspaceInfo?.teamId ?? -1;
+        if (teamID === -1) return;
+        fetchTeamMembers(teamID).then(r => {
+        });
+    }, [workspaceInfo]);
+
+    useEffect(() => {
         if (user) return;
         router.push("/login").then(r => {
         });
@@ -108,6 +130,8 @@ export default function App() {
     const handleDateClick = (date: number) => {
         setEditDate(date);
         setEditOpen(true);
+        fetchWorkspaceInfo().then(r => {
+        });
     };
 
     const handleCloseEdit = () => {
@@ -253,7 +277,9 @@ export default function App() {
                 <Card onDrop={handleSidebarDrop} onDragOver={e => e.preventDefault()} className="h-full">
                     <CardHeader className="flex items-center justify-between">
                         <span className="text-lg font-medium text-gray-600">{t("calendar.availableEvents")}</span>
-                        <Button onPress={e => createUnsetEvent()}>{t("calendar.createEvent")}</Button>
+                        {workspaceInfo?.canEditCards && (
+                            <Button onPress={e => createUnsetEvent()}>{t("calendar.createEvent")}</Button>
+                        )}
                     </CardHeader>
                     <CardBody>
                         {getUnsetEvents() && getUnsetEvents().length == 0 &&
@@ -288,6 +314,40 @@ export default function App() {
                             onChange={e => setEditingEvent({...editingEvent!, dateDue: new Date(e.target.value)})}
                             type={"datetime-local"}
                         />
+                        <div className="mt-4">
+                            <label className="text-sm text-gray-400">{t("calendar.attendees")}</label>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {editingEvent?.attendees?.map(userId => (
+                                    <span key={userId} className="flex items-center gap-1 text-xs bg-gray-700 px-2 py-1 rounded">
+                                        {getAttendeeName(userId)}
+                                        <button
+                                            className="hover:text-red-400 ml-1"
+                                            onClick={() => removeAttendee(userId)}
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                            {teamMembers.length > 0 && (
+                                <div className="mt-2">
+                                    <label className="text-xs text-gray-500">{t("calendar.addAttendee")}</label>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {teamMembers
+                                            .filter(m => m.userId && !editingEvent?.attendees?.includes(m.userId))
+                                            .map(member => (
+                                                <button
+                                                    key={member.userId}
+                                                    className="text-xs bg-gray-800 hover:bg-gray-600 px-2 py-1 rounded"
+                                                    onClick={() => addAttendee(member)}
+                                                >
+                                                    + {member.username}
+                                                </button>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                         <div className="mt-4">
                             <label className="text-sm text-gray-400">{t("calendar.label")}</label>
                             <div className="flex flex-wrap gap-2 mt-2">
@@ -375,7 +435,7 @@ export default function App() {
         const eventLabel = event.label ? getLabelByName(event.label) : undefined;
         return (
             <Card
-                key={event.id} className="p-2 border rounded mb-2"
+                key={event.id} className="p-2 border rounded mb-2 min-w-[200px]"
                 draggable
                 onDragStart={() => handleDragStart(event)}
                 onDragEnd={handleDragEnd}
@@ -392,17 +452,27 @@ export default function App() {
                         )}
                         {event.title}
                     </div>
-                    {event.editable ?
+                    {event.editable && workspaceInfo?.canEditCards ?
                         <Button onPress={() => setEditingEvent(event)}>{t("common.edit")}</Button>
                         : ""}
                 </CardHeader>
                 <CardBody>
                     {event.description}
                 </CardBody>
-                <CardFooter>
+                <CardFooter className="flex flex-col items-start gap-1">
                     {event.dateDue && <span className="text-sm text-gray-500">
                         {t("calendar.due")}: {event.dateDue?.toLocaleDateString()} {event.dateDue?.toLocaleTimeString()}
                     </span>}
+                    {event.attendees && event.attendees.length > 0 && (
+                        <div className="flex items-center gap-1 flex-wrap">
+                            <span className="text-sm text-gray-400">{t("calendar.attendees")}:</span>
+                            {event.attendees.map(userId => (
+                                <span key={userId} className="text-xs bg-gray-700 px-2 py-0.5 rounded">
+                                    {getAttendeeName(userId)}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </CardFooter>
             </Card>
         );
@@ -430,6 +500,32 @@ export default function App() {
                 setWorkspaceInfo(data);
             }).catch(e => {
             });
+    }
+
+    const fetchTeamMembers = async (teamId: number) => {
+        await privateAxios.get(`/team/${teamId}/members`)
+            .then(res => {
+                setTeamMembers(res.data);
+            }).catch(e => {
+            });
+    }
+
+    const getAttendeeName = (odUserId: number): string => {
+        const member = teamMembers.find(m => m.userId === odUserId);
+        return member?.username || `User ${odUserId}`;
+    }
+
+    const addAttendee = (member: TeamMember) => {
+        if (!editingEvent || !member.userId) return;
+        const currentAttendees = editingEvent.attendees || [];
+        if (currentAttendees.includes(member.userId)) return;
+        setEditingEvent({...editingEvent, attendees: [...currentAttendees, member.userId]});
+    }
+
+    const removeAttendee = (userId: number) => {
+        if (!editingEvent) return;
+        const currentAttendees = editingEvent.attendees || [];
+        setEditingEvent({...editingEvent, attendees: currentAttendees.filter(id => id !== userId)});
     }
 
     const fetchEvents = async () => {
@@ -574,3 +670,8 @@ export default function App() {
         </DefaultLayout>
     );
 }
+
+
+
+
+
