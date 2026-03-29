@@ -1,6 +1,6 @@
 const lv_LV: Record<string, string> = {
     "app.name": "Orbital",
-    "app.description": "Komandai domāts kalendārs.",
+    "app.description": "Renārs Ozoliņš | Pēdējais skolas projekts 2026. Gadam",
 
     "nav.home": "Sākums",
     "nav.register": "Reģistrēties",
@@ -155,7 +155,6 @@ const lv_LV: Record<string, string> = {
     "calendar.dueDate": "Termiņš",
     "calendar.due": "Termiņš",
     "calendar.close": "Aizvērt",
-    "calendar.title": "Nosaukums",
     "calendar.label": "Iezīme",
     "calendar.manageLabels": "Pārvaldīt iezīmes",
     "calendar.createLabel": "Izveidot iezīmi",

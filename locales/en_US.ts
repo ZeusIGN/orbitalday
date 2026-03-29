@@ -1,6 +1,6 @@
 const en_US: Record<string, string> = {
     "app.name": "Orbital",
-    "app.description": "A team first calendar.",
+    "app.description": "Renārs Ozoliņš | Senior Project of 2026",
 
     "nav.home": "Home",
     "nav.register": "Register",
@@ -155,7 +155,6 @@ const en_US: Record<string, string> = {
     "calendar.dueDate": "Due date",
     "calendar.due": "Due",
     "calendar.close": "Close",
-    "calendar.title": "Title",
     "calendar.label": "Label",
     "calendar.manageLabels": "Manage Labels",
     "calendar.createLabel": "Create Label",
