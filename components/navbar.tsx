@@ -2,24 +2,33 @@ import {Navbar as HeroUINavbar, NavbarBrand, NavbarContent, NavbarItem,} from "@
 import {link as linkStyles} from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import {useTheme} from "next-themes";
 
 import {siteConfig} from "@/config/site";
 import {ThemeSwitch} from "@/components/theme-switch";
 import {LanguageSwitch} from "@/components/language-switch";
-import {Logo,} from "@/components/icons";
+import {Logo} from "@/components/icons";
 import {useAuth} from "@/context/AuthContext";
 import {useTranslation} from "@/context/TranslationContext";
+import {Image} from "@heroui/image";
 
 export const Navbar = () => {
     const {user} = useAuth();
     const {t} = useTranslation();
+    const {theme} = useTheme();
 
     return (
         <HeroUINavbar maxWidth="xl" position="sticky">
             <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
                 <NavbarBrand className="gap-3 max-w-fit">
                     <NextLink className="flex justify-start items-center gap-1" href="/">
-                        <Logo/>
+                        <Image
+                            src="/orbital.svg"
+                            alt="Orbital Logo"
+                            width={32}
+                            height={32}
+                            className={theme === "dark" ? "invert" : ""}
+                        />
                         <p className="font-bold text-inherit">{t("app.name")}</p>
                     </NextLink>
                 </NavbarBrand>
